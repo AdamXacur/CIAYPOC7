@@ -1,15 +1,15 @@
 import axios from 'axios';
 import { toast } from "sonner";
 
-// Lógica dinámica de entorno (Estilo Commercium)
-// En local usa localhost, en producción usa la variable inyectada por Docker
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// --- TÉCNICA DE HARDCODING ---
+// 1. Intenta leer la variable de entorno (definida en .env.local para tu PC)
+// 2. Si no existe (en el servidor a veces pasa), usa la URL de producción "a fuego".
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.xac.lat/api";
 
-console.log(`[api-service] Environment: ${process.env.NODE_ENV}`);
-console.log(`[api-service] Using API URL: ${API_BASE_URL}`);
+console.log(`[CRAC-API] Conectando a: ${API_URL}`);
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-            console.warn("[api-service] 401 Unauthorized - Redirecting to login");
+            console.warn("Sesión expirada. Redirigiendo al login...");
             localStorage.removeItem('auth_token');
             localStorage.removeItem('user_role');
             document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -37,7 +37,7 @@ api.interceptors.response.use(
   }
 );
 
-// --- Servicios (Se mantienen igual) ---
+// --- Servicios ---
 export const authService = {
   login: async (credentials: any) => {
     const params = new URLSearchParams();
