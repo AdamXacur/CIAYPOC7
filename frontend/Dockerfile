@@ -1,6 +1,6 @@
 FROM node:18-alpine AS base
 
-# 1. Instalar dependencias de sistema (Vital para Alpine)
+# 1. Instalar dependencias de sistema
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
@@ -16,17 +16,21 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Inyectar URL en tiempo de build (si se pasa como ARG)
+# --- FIX: Asegurar que la carpeta public exista ---
+# Si git no la subió porque estaba vacía, esto la crea para que el build no falle
+RUN mkdir -p public
+
+# Inyectar URL
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Desactivar telemetría
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Construir la app
+# Construir
 RUN npm run build
 
-# 4. Runner (Producción)
+# 4. Runner
 FROM base AS runner
 WORKDIR /app
 
@@ -40,7 +44,7 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 
-# Copiar la versión compilada (Standalone)
+# Copiar la versión compilada
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -48,5 +52,4 @@ USER nextjs
 
 EXPOSE 3000
 
-# COMANDO CORRECTO: Ejecutar el servidor de Node, NO npm run dev
 CMD ["node", "server.js"]
