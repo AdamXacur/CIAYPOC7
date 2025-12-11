@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crac_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Como el navegador ejecuta el JS, localhost apunta a tu máquina host, donde vive el backend
+      - VITE_API_URL=http://localhost:8000/api
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.ts:/app/vite.config.ts
+    # No necesita network compartida con backend porque la comunicación es vía navegador (cliente)
+    restart: unless-stopped

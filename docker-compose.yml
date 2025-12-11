@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # 1. BASE DE DATOS
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: crac_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - crac_network
+
+  # 2. BACKEND (API)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crac_backend
+    command: /app/entrypoint.sh
+    # No exponemos puerto 8000 al host en producción, Caddy lo maneja internamente
+    # ports:
+    #   - "8000:8000" 
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - crac_network
+
+  # 3. FRONTEND (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Esta variable se "quema" en el build de React. 
+        # En el servidor debe ser la URL pública (https://api.xac.lat/api)
+        NEXT_PUBLIC_API_URL: ${FRONTEND_API_URL}
+    container_name: crac_frontend
+    # No exponemos puerto 3000 al host, Caddy lo maneja
+    restart: always
+    networks:
+      - crac_network
+
+  # 4. CADDY (Servidor Web & HTTPS Automático)
+  caddy:
+    image: caddy:2-alpine
+    container_name: crac_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - crac_network
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  crac_network:
+    driver: bridge

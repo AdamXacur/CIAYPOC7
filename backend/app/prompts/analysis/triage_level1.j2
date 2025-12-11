@@ -1,0 +1,30 @@
+{% include 'base/persona.j2' %}
+
+TAREA: CLASIFICACIÓN INDIVIDUAL (TRIAGE NIVEL 1)
+================================================
+Analiza la siguiente solicitud única para determinar su ruteo inicial.
+
+SOLICITUD:
+- Descripción: {{ request.description }}
+- Ubicación: {{ request.location_text }}
+
+CONTEXTO DE MANUALES (RAG):
+{{ rag_context }}
+
+REGLAS DE CLASIFICACIÓN:
+1. TEMA: Clasifica en [Seguridad, Salud, Transporte, Servicios Públicos, Educación, Tecnología, Otros].
+2. SENTIMIENTO: [Positivo, Neutro, Negativo, Agresivo].
+3. URGENCIA: [Baja, Media, Alta, Crítica].
+   - Crítica: Riesgo de vida, colapso de servicio masivo, riesgo mediático alto.
+4. DEPENDENCIA SUGERIDA: Basado en la descripción y el contexto de manuales, ¿quién debe atenderlo?
+
+{% include 'base/constraints.j2' %}
+
+ESTRUCTURA DE RESPUESTA:
+{
+  "topic": "...",
+  "sentiment": "...",
+  "urgency": "...",
+  "suggested_department": "Nombre de la dependencia o 'Mesa de Ayuda General'",
+  "reasoning": "Breve justificación basada en el manual o lógica."
+}

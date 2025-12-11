@@ -1,0 +1,45 @@
+{% include 'base/persona.j2' %}
+
+TAREA: ANÁLISIS DE CORRELACIÓN Y CLASIFICACIÓN MASIVA
+=====================================================
+Recibirás un lote de {{ requests | length }} solicitudes.
+Tu objetivo es doble:
+1. CLASIFICAR cada solicitud individualmente.
+2. DETECTAR patrones anómalos grupales.
+
+CONTEXTO RAG:
+{{ rag_context | default("Sin contexto adicional.") }}
+
+DATOS:
+{% for req in requests %}
+ID: {{ req.id }} | Texto: {{ req.description }}
+{% endfor %}
+
+REGLAS DE CLASIFICACIÓN:
+- Topics permitidos: [Seguridad, Salud, Transporte, Servicios Públicos, Educación, Otros].
+- Urgency: [Baja, Media, Alta, Crítica].
+- Sentiment: [Positivo, Neutro, Negativo].
+
+{% include 'base/constraints.j2' %}
+
+ESTRUCTURA DE RESPUESTA JSON (OBLIGATORIA):
+{
+  "batch_summary": "Resumen breve...",
+  "classifications": [
+    {
+      "id": "id_de_la_solicitud",
+      "topic": "Tema asignado",
+      "urgency": "Nivel urgencia",
+      "sentiment": "Sentimiento detectado"
+    }
+    // ... DEBES DEVOLVER UN OBJETO POR CADA SOLICITUD RECIBIDA
+  ],
+  "detected_patterns": [
+    {
+      "pattern_name": "Nombre del patrón (ej. Falla Red Kanasín)",
+      "affected_request_ids": ["id1", "id2"],
+      "root_cause_hypothesis": "Causa probable",
+      "urgency": "Alta"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+# Configuración de Caddy para xac.lat
+
+# Frontend (Next.js)
+xac.lat {
+    reverse_proxy frontend:3000
+}
+
+# Redirección www -> non-www
+www.xac.lat {
+    redir https://xac.lat{uri}
+}
+
+# Backend (FastAPI)
+api.xac.lat {
+    reverse_proxy backend:8000 {
+        # Vital para Streaming de IA (evita buffering)
+        flush_interval -1
+    }
+}
